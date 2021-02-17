@@ -1,0 +1,40 @@
+#Slurm roles
+slurm_roles: ['controller', 'exec', 'dbd'] # head node can be an execute host, will be the controller and will run the sacct database
+
+slurm_database_user: slurm
+slurm_database_user_password: "{{ vault_mariadb_password_slurm }}" #in your VAULT groupvars encrypted file, set a password for the slurm user in mariadb like: vault_mariadb_password_slurm: 'mypasswordisreallyterrible'
+slurm_database: 'slurm_acct_db'
+
+#Mariadb for slurm accounting
+
+mariadb_root_pass: "{{ vault_mariadb_password_root }}"
+mariadb_options:
+  innodb_buffer_pool_size: 1073741824
+  innodb_log_file_size: 67108864
+  innodb_lock_wait_timeout: 900
+mariadb_users:
+  - name: "{{ slurm_database_user }}"
+    password: "{{ slurm_database_user_password }}"
+    priv: '{{ slurm_database }}.*:ALL'
+mariadb_databases:
+  - name: '{{ slurm_database }}'
+
+#Slurmdbd
+
+slurmdbd_config:
+  AuthType: auth/munge
+  AuthInfo: /var/run/munge/munge.socket.2
+  DbdHost: localhost
+  StorageHost: localhost
+  StorageLoc: "{{ slurm_database }}"
+  StoragePass: "{{ slurm_database_user_password }}"
+  StorageType: accounting_storage/mysql
+  StorageUser: "{{ slurm_database_user }}"
+  LogFile: /var/log/slurm-llnl/slurmdbd.log
+  PidFile: /var/run/slurmdbd.pid
+  SlurmUser: slurm
+
+#NFS shares
+
+nfs_exports:
+    - "/mnt/shared  *(rw,async,no_root_squash,no_subtree_check)" #Feel free to specify machine access here. I allow * as access is controlled via security groups in my cloud architecture.

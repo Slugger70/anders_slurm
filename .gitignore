@@ -1,0 +1,6 @@
+#git ignore
+roles/galaxyproject.*
+roles/geerlingguy.*
+
+.vault_pass.txt
+.ansible

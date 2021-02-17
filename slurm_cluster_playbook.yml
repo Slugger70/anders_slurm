@@ -1,0 +1,46 @@
+- name: Slurm cluster head node configuration
+  hosts: head-node
+  become: yes
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/head-node.yml
+    - group_vars/VAULT
+  roles:
+    - common
+    - galaxyproject.repos
+    - geerlingguy.pip
+    - geerlingguy.nfs
+    - mariadb
+    - galaxyproject.slurm
+    - galaxyproject.cvmfs #Optional if you want singularity containers etc. 
+  post_tasks:
+    - name: Reload exports file
+      command: "exportfs -ra"
+    - name: Restart munge service
+      service:
+        name: munge
+        state: restarted
+    - name: Install slurm-drmaa
+      package:
+        name: slurm-drmaa1
+        state: latest
+
+- name: Slurm cluster worker node configuration
+  hosts: worker-nodes
+  become: yes
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/worker-nodes.yml
+    - group_vars/VAULT
+  roles:
+    - common
+    - galaxyproject.repos
+    - geerlingguy.pip
+    - galaxyproject.slurm
+    - mounts
+    - galaxyproject.cvmfs
+  post_tasks:
+    - name: Restart munge service
+      service:
+        name: munge
+        state: restarted

@@ -1,0 +1,81 @@
+- name: Update the apt repos and base OS
+  apt:
+      upgrade: dist
+      update_cache: yes
+  become: yes
+  become_user: root
+
+- name: Install some common packages
+  apt:
+      name: "{{ common_packages }}"
+      state: latest
+  become: yes
+  become_user: root
+  when: common_packages is defined
+
+- name: Install group specific packages
+  apt:
+      name: "{{ group_packages }}"
+      state: latest
+  become: yes
+  become_user: root
+  when: group_packages is defined
+
+- name: Add external ips to hosts
+  block:
+    - name: Add to head node to all worker's hosts files
+      become: yes
+      become_user: root
+      lineinfile:
+          path: "/etc/hosts"
+          line: "{{ hostvars[item].ansible_ssh_host }}\t{{ item }}"
+          state: present
+          backup: yes
+      when: add_hosts_head is defined and add_hosts_head == true
+      with_items:
+          "{{ head_nodes }}"
+
+    - name: Add to worker nodes to head node's host file
+      become: yes
+      become_user: root
+      lineinfile:
+          path: "/etc/hosts"
+          line: "{{ hostvars[item].ansible_ssh_host }}\t{{ item }}"
+          state: present
+          backup: yes
+      when: add_hosts_workers is defined and add_hosts_workers == true
+      with_items:
+          "{{ worker_nodes }}"
+
+  when: use_internal_ips is not defined or use_internal_ips == false
+
+- name: Add internal ips to hosts
+  block:
+    - name: Add to head node to all worker's hosts files
+      become: yes
+      become_user: root
+      lineinfile:
+          path: "/etc/hosts"
+          line: "{{ hostvars[item].internal_ip }}\t{{ item }}"
+          state: present
+          backup: yes
+      when: add_hosts_head is defined and add_hosts_head == true
+      with_items:
+          "{{ head_nodes }}"
+
+    - name: Add to worker nodes to head node's host file
+      become: yes
+      become_user: root
+      lineinfile:
+          path: "/etc/hosts"
+          line: "{{ hostvars[item].internal_ip }}\t{{ item }}"
+          state: present
+          backup: yes
+      when: add_hosts_workers is defined and add_hosts_workers == true
+      with_items:
+          "{{ worker_nodes }}"
+
+  when: use_internal_ips is defined and use_internal_ips == true
+
+- name: Add machine users
+  import_tasks: machine_users.yml

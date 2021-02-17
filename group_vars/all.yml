@@ -1,0 +1,128 @@
+#Common packages to install on all of the machines. This list is for us as we use Ubuntu 20.04 LTS on all our machines.. Feel free to add/remove to your heart's content.
+common_packages:
+    - python-is-python3
+    - vim
+    - acl
+    - git
+    - build-essential
+    - python3-dev
+    - libcurl4-openssl-dev
+    - libgnutls28-dev
+    - libssl-dev
+    - python3-virtualenv
+    - python3-pip
+    - htop
+    - nfs-common
+    - atop
+    - speedometer
+    - byobu
+    - apt-transport-https
+    - tar
+    - bzip2
+    - libgl1-mesa-glx
+    - unzip
+    - tree
+
+#Set pip to be pip3 by default - see roles/geerlingguy.pip/defaults/main.yml
+pip_package: python3-pip
+
+# Machine users to add to each machine
+# You will need their email address's (I normally put them into the VAULT stored as joe_email: "joe@somewhere.com")
+# You will also need each user's public ssh key. We don't allow login to linux via password at all, only by ssh key.
+# It's important to set the uid so that each user gets the same user id and gid on everymachine.
+
+#List of users to install and setup /homes for
+machine_users:
+    - name: joe
+      role: sudo
+      uid: 10010
+      state: present #set to absent to remove this user
+      key: files/keys/joe.pub
+      email: "{{ joe_email }}"
+    - name: fred
+      role: user
+      uid: 10011
+      state: present
+      key: files/keys/fred.pub
+      email: "{{ fred_email }}"
+    - name: grace
+      role: sudo
+      uid: 10012
+      state: present
+      key: files/keys/grace.pub
+      email: "{{ grace_email }}"
+    - name: jenkins_bot
+      role: sudo
+      uid: 10013
+      state: present
+      key: files/keys/jenkins_bot.pub
+      email: "{{ jenkins_bot_email }}"
+
+#Hostnames for the workers and head node. The head node will have the workers details put into it's /etc/hosts file and the workers will have the head nodes details put into theirs. If you're using this repo for lots of clusters, then put this into a more specified vars file.
+head_nodes: "{{ groups['head-node'] }}"
+worker_nodes: "{{ groups['worker-nodes'] }}"
+
+#################################################
+# Slurm config for all machines 
+# This is for the slurm.conf file on all nodes.
+#################################################
+
+slurm_nodes:
+    - name: head-node
+      NodeAddr: "{{ hostvars['head-node']['ansible_ssh_host'] }}"
+      CPUs: 8 #Adjust these values to suit your machines
+      RealMemory: 16380
+      State: UNKNOWN
+    - name: worker1
+      NodeAddr: "{{ hostvars['worker1']['ansible_ssh_host'] }}"
+      CPUs: 16
+      RealMemory: 49350
+      State: UNKNOWN
+    - name: worker2
+      NodeAddr: "{{ hostvars['worker2']['ansible_ssh_host'] }}"
+      CPUs: 16
+      RealMemory: 49350
+      State: UNKNOWN
+    
+slurm_partitions:
+    - name: main
+      nodes: "worker1,worker2"
+      Default: YES
+      MaxTime: INFINITE
+      State: UP
+
+slurm_config:
+    #SlurmDBd includes
+    AccountingStorageType: accounting_storage/slurmdbd
+    AccountingStorageHost: localhost
+    JobAcctGatherType: jobacct_gather/linux
+    ControlMachine: pulsar-nci-test
+    SlurmctldPidFile: /run/slurmctld.pid
+    SlurmdPidFile: /run/slurmd.pid
+    # SCHEDULING
+    FastSchedule: 2
+    SchedulerType: sched/backfill
+    SelectType: select/cons_res
+    SelectTypeParameters: CR_CPU,CR_LLN #There are lots of options here.. Look at slurm docs for details
+
+slurm_munge_key: files/keys/munge.key #You prolly want to create your own munge key. I've included one here for testing
+
+#sinfo and squeue configs - just aesthetics.. Makes sinfo, squeue and sacct much prettier to look at.
+bashrc_env: |
+  export SINFO_FORMAT="%16n %.12C %.6t"
+  export SQUEUE_FORMAT="%8i %9P %.35j %.9T %8r %19S %.10M %.6m %.3C %.3N %.55Z"
+  export SACCT_FORMAT="jobid%8,partition%9,jobname%30,alloccpus,elapsed,totalcpu,END,state,MaxRSS,ReqMem,NodeList"
+
+# cvmfs if you want to set up access to CVMFS repos for reference data and singularity containers.
+cvmfs_role: client
+galaxy_cvmfs_repos_enabled: true
+
+galaxy_cvmfs_server_urls:
+  - domain: galaxyproject.org
+    use_geoapi: yes
+    urls:
+      - "http://cvmfs1-psu0.galaxyproject.org/cvmfs/@fqrn@"
+      - "http://cvmfs1-iu0.galaxyproject.org/cvmfs/@fqrn@"
+      - "http://cvmfs1-tacc0.galaxyproject.org/cvmfs/@fqrn@"
+      - "http://cvmfs1-mel0.gvl.org.au/cvmfs/@fqrn@"
+      - "http://cvmfs1-ufr0.galaxyproject.eu/cvmfs/@fqrn@"

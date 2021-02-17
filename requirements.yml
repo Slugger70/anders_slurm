@@ -1,0 +1,10 @@
+# This role contains setup for the galaxyproject yum and apt repos which has the slurm drmaa library in it. This is necessary if you want to programatically use slurm from python.
+- name: galaxyproject.repos 
+# This is the main slurm installation role
+- name: galaxyproject.slurm
+# This role sets up cvmfs access to singularity.galaxyproject.org and data.galaxyproject.org - cvmfs repos of biocontainers and galaxy's reference data respectively. Only if you want it really. Otherwise omit.
+- name: galaxyproject.cvmfs
+# This role installs and configures nfs server and client on the machines so you can have common disk spaces in your cluster. Maybe not required if you already have shared disk between the nodes in your cluster.
+- name: geerlingguy.nfs
+# This role installs pip3 and sets it to be default which can be an issue for different things..
+- name: geerlingguy.pip

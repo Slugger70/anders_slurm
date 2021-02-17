@@ -1,0 +1,10 @@
+slurm_roles: ['exec'] #Workers will have slurmd installed and be execute hosts
+
+add_hosts_head: true #Add the head node to the hosts file
+
+#This is if you are running nfs server and are sharing a disk from the headnode to the workers. Feel free to ignore if you setup common disks in other ways.
+shared_mounts:
+    - path: /mnt/shared
+      src: head-node:/mnt/shared
+      fstype: nfs
+      state: mounted

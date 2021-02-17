@@ -1,0 +1,31 @@
+
+- name: Create machines users and set passwordless sudo role if required
+  become: true
+  become_user: root
+  block:
+  - name: Add machine users
+    user:
+      name: "{{ item.name }}"
+      shell: /bin/bash
+      uid: "{{ item.uid }}"
+      state: "{{ item.state }}"
+      append: true
+    with_items: "{{ machine_users }}"
+  - name: Add some env_vars to .bashrcs
+    blockinfile:
+      path: "/home/{{ item.name }}/.bashrc"
+      block: |
+        {{ bashrc_env }}
+      marker: "# {mark} MANAGED BY ANSIBLE - DO NOT MODIFY"
+    with_items: "{{ machine_users }}"
+  - name: Add SSH keys for users
+    authorized_key:
+      user: "{{ item.name }}"
+      key: "{{ lookup('file', item.key) }}"
+      state: present
+    with_items: "{{ machine_users }}"
+  - name: Add sudo users
+    copy:
+      dest: "/etc/sudoers.d/{{ item.name }}"
+      content: "{{ item.name }}  ALL=(ALL)  NOPASSWD: ALL"
+    with_items: "{{ machine_users | selectattr('role', 'equalto', 'sudo') | list }}"
