@@ -7,8 +7,10 @@
     user:
       name: "{{ item.name }}"
       shell: /bin/bash
-      uid: "{{ item.uid }}"
-      state: "{{ item.state }}"
+      password: "{{ item.password | password_hash('sha256', 'makeacoolpassword') }}"
+      home: "/mnt/home/{{ item.name }}"
+      #uid: "{{ item.uid }}"
+      #state: "{{ item.state }}"
       append: true
     with_items: "{{ machine_users }}"
   - name: Add some env_vars to .bashrcs
@@ -18,14 +20,14 @@
         {{ bashrc_env }}
       marker: "# {mark} MANAGED BY ANSIBLE - DO NOT MODIFY"
     with_items: "{{ machine_users }}"
-  - name: Add SSH keys for users
-    authorized_key:
-      user: "{{ item.name }}"
-      key: "{{ lookup('file', item.key) }}"
-      state: present
-    with_items: "{{ machine_users }}"
-  - name: Add sudo users
-    copy:
-      dest: "/etc/sudoers.d/{{ item.name }}"
-      content: "{{ item.name }}  ALL=(ALL)  NOPASSWD: ALL"
-    with_items: "{{ machine_users | selectattr('role', 'equalto', 'sudo') | list }}"
+  # - name: Add SSH keys for users
+  #   authorized_key:
+  #     user: "{{ item.name }}"
+  #     key: "{{ lookup('file', item.key) }}"
+  #     state: present
+  #   with_items: "{{ machine_users }}"
+  # - name: Add sudo users
+  #   copy:
+  #     dest: "/etc/sudoers.d/{{ item.name }}"
+  #     content: "{{ item.name }}  ALL=(ALL)  NOPASSWD: ALL"
+  #   with_items: "{{ machine_users | selectattr('role', 'equalto', 'sudo') | list }}"

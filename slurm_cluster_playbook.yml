@@ -5,6 +5,19 @@
     - group_vars/all.yml
     - group_vars/head-node.yml
     - group_vars/VAULT
+    - group_vars/users.yml
+  pre_tasks:
+    - name: Attach volume to instance
+      include_role:
+        name: attached-volumes
+    - name: Make /mnt/home
+      file:
+        path: /mnt/home
+        state: directory
+    - name: make the shared directory
+      file:
+        path: /mnt/shared
+        state: directory
   roles:
     - common
     - galaxyproject.repos
@@ -32,6 +45,7 @@
     - group_vars/all.yml
     - group_vars/worker-nodes.yml
     - group_vars/VAULT
+    - group_vars/users.yml
   roles:
     - common
     - galaxyproject.repos

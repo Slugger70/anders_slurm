@@ -8,3 +8,7 @@ shared_mounts:
       src: head-node:/mnt/shared
       fstype: nfs
       state: mounted
+    - path: /mnt/home
+      src: head-node:/mnt/home
+      fstype: nfs
+      state: mounted

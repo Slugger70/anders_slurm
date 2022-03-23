@@ -32,31 +32,31 @@ pip_package: python3-pip
 # It's important to set the uid so that each user gets the same user id and gid on everymachine.
 
 #List of users to install and setup /homes for
-machine_users:
-    - name: joe
-      role: sudo
-      uid: 10010
-      state: present #set to absent to remove this user
-      key: files/keys/joe.pub
-      email: "{{ joe_email }}"
-    - name: fred
-      role: user
-      uid: 10011
-      state: present
-      key: files/keys/fred.pub
-      email: "{{ fred_email }}"
-    - name: grace
-      role: sudo
-      uid: 10012
-      state: present
-      key: files/keys/grace.pub
-      email: "{{ grace_email }}"
-    - name: jenkins_bot
-      role: sudo
-      uid: 10013
-      state: present
-      key: files/keys/jenkins_bot.pub
-      email: "{{ jenkins_bot_email }}"
+# machine_users:
+#     - name: joe
+#       role: sudo
+#       uid: 10010
+#       state: present #set to absent to remove this user
+#       key: files/keys/joe.pub
+#       email: "{{ joe_email }}"
+#     - name: fred
+#       role: user
+#       uid: 10011
+#       state: present
+#       key: files/keys/fred.pub
+#       email: "{{ fred_email }}"
+#     - name: grace
+#       role: sudo
+#       uid: 10012
+#       state: present
+#       key: files/keys/grace.pub
+#       email: "{{ grace_email }}"
+#     - name: jenkins_bot
+#       role: sudo
+#       uid: 10013
+#       state: present
+#       key: files/keys/jenkins_bot.pub
+#       email: "{{ jenkins_bot_email }}"
 
 #Hostnames for the workers and head node. The head node will have the workers details put into it's /etc/hosts file and the workers will have the head nodes details put into theirs. If you're using this repo for lots of clusters, then put this into a more specified vars file.
 head_nodes: "{{ groups['head-node'] }}"
@@ -70,23 +70,28 @@ worker_nodes: "{{ groups['worker-nodes'] }}"
 slurm_nodes:
     - name: head-node
       NodeAddr: "{{ hostvars['head-node']['ansible_ssh_host'] }}"
-      CPUs: 8 #Adjust these values to suit your machines
-      RealMemory: 16380
+      CPUs: 16 #Adjust these values to suit your machines
+      RealMemory: 32116
+      State: UNKNOWN
+    - name: worker0
+      NodeAddr: "{{ hostvars['worker0']['ansible_ssh_host'] }}"
+      CPUs: 16
+      RealMemory: 32116
       State: UNKNOWN
     - name: worker1
       NodeAddr: "{{ hostvars['worker1']['ansible_ssh_host'] }}"
       CPUs: 16
-      RealMemory: 49350
+      RealMemory: 32116
       State: UNKNOWN
     - name: worker2
       NodeAddr: "{{ hostvars['worker2']['ansible_ssh_host'] }}"
       CPUs: 16
-      RealMemory: 49350
+      RealMemory: 32116
       State: UNKNOWN
     
 slurm_partitions:
     - name: main
-      nodes: "worker1,worker2"
+      nodes: "worker1,worker2,worker3"
       Default: YES
       MaxTime: INFINITE
       State: UP

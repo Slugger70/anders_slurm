@@ -1,5 +1,5 @@
 #Slurm roles
-slurm_roles: ['controller', 'exec', 'dbd'] # head node can be an execute host, will be the controller and will run the sacct database
+slurm_roles: ['controller', 'dbd'] # head node can be an execute host, will be the controller and will run the sacct database
 
 slurm_database_user: slurm
 slurm_database_user_password: "{{ vault_mariadb_password_slurm }}" #in your VAULT groupvars encrypted file, set a password for the slurm user in mariadb like: vault_mariadb_password_slurm: 'mypasswordisreallyterrible'
@@ -34,7 +34,15 @@ slurmdbd_config:
   PidFile: /var/run/slurmdbd.pid
   SlurmUser: slurm
 
+# variables for attaching mounted volume to application server
+attached_volumes:
+  - device: /dev/vdb
+    path: /mnt
+    partition: 1
+    fstype: ext4
+
 #NFS shares
 
 nfs_exports:
     - "/mnt/shared  *(rw,async,no_root_squash,no_subtree_check)" #Feel free to specify machine access here. I allow * as access is controlled via security groups in my cloud architecture.
+    - "/mnt/home  *(rw,async,no_root_squash,no_subtree_check)"
